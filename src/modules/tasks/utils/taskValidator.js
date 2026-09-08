@@ -1,31 +1,29 @@
-const HttpError = require('../../../utils/httpError');
+const HttpError = require("../../../utils/httpError");
 
-const ALLOWED_FIELDS = ['title', 'completed'];
+const ALLOWED_FIELDS = ["title", "completed"];
 
 function validatePayloadShape(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new HttpError(400, 'Body must be a JSON object.');
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+    throw new HttpError(400, "Body must be a JSON object.");
   }
 }
 
 function ensureNoUnknownFields(payload) {
-  const unknownFields = Object.keys(payload).filter(
-    (field) => !ALLOWED_FIELDS.includes(field)
-  );
+  const unknownFields = Object.keys(payload).filter((field) => !ALLOWED_FIELDS.includes(field));
 
   if (unknownFields.length > 0) {
-    throw new HttpError(400, 'Body contains unsupported fields.', {
+    throw new HttpError(400, "Body contains unsupported fields.", {
       unsupportedFields: unknownFields,
     });
   }
 }
 
 function normalizeTitleIfPresent(payload, normalized) {
-  if (!Object.hasOwn(payload, 'title')) {
+  if (!Object.hasOwn(payload, "title")) {
     return;
   }
 
-  if (typeof payload.title !== 'string') {
+  if (typeof payload.title !== "string") {
     throw new HttpError(400, '"title" must be a string.');
   }
 
@@ -34,15 +32,18 @@ function normalizeTitleIfPresent(payload, normalized) {
     throw new HttpError(400, '"title" cannot be empty.');
   }
 
+  if (trimmedTitle.length < 2) {
+    throw new HttpError(400, '"title" must be at least 2 characters long.');
+  }
   normalized.title = trimmedTitle;
 }
 
 function normalizeCompletedIfPresent(payload, normalized) {
-  if (!Object.hasOwn(payload, 'completed')) {
+  if (!Object.hasOwn(payload, "completed")) {
     return;
   }
 
-  if (typeof payload.completed !== 'boolean') {
+  if (typeof payload.completed !== "boolean") {
     throw new HttpError(400, '"completed" must be a boolean.');
   }
 
@@ -57,11 +58,11 @@ function validateCreateTask(payload) {
   normalizeTitleIfPresent(payload, normalized);
   normalizeCompletedIfPresent(payload, normalized);
 
-  if (!Object.hasOwn(normalized, 'title')) {
+  if (!Object.hasOwn(normalized, "title")) {
     throw new HttpError(400, '"title" is required.');
   }
 
-  if (!Object.hasOwn(normalized, 'completed')) {
+  if (!Object.hasOwn(normalized, "completed")) {
     normalized.completed = false;
   }
 
@@ -77,7 +78,7 @@ function validateUpdateTask(payload) {
   normalizeCompletedIfPresent(payload, normalized);
 
   if (Object.keys(normalized).length === 0) {
-    throw new HttpError(400, 'Provide at least one updatable field.');
+    throw new HttpError(400, "Provide at least one updatable field.");
   }
 
   return normalized;
