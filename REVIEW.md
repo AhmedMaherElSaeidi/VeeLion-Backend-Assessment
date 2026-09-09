@@ -1,5 +1,10 @@
 # Changes made
 
+## New files
+
+- `REVIEW.md` — full code review (bugs, performance, maintainability, security, code quality).
+- `src/modules/activity/utils/activityValidator.js` — validates `POST /activity` bodies.
+
 ## Modified Files
 
 ### Maintability
@@ -8,6 +13,11 @@
 
 - Removed inline validation.
 - Used `taskValidator.js` (previously written but never imported) for both create and update.
+
+**`src/modules/activity/controllers/activity.controller.js`**
+
+- Renamed (`aSvc`, `c`, `x`, `b`, `one`, `get_activity`) to clean, consistent names (`activityService`, `getActivity`, `createNewActivity`).
+- Added validation via the new `activityValidator.js`.
 
 ### Code Quality
 
