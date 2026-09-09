@@ -4,6 +4,10 @@
 
 - `REVIEW.md` — full code review (bugs, performance, maintainability, security, code quality).
 - `src/modules/activity/utils/activityValidator.js` — validates `POST /activity` bodies.
+- `src/modules/reports/routes/reports.routes.js` — `GET /reports/tasks-summary` route.
+- `src/modules/reports/controllers/reports.controller.js` — parses optional `?hours=` query param, calls the service.
+- `src/modules/reports/services/reports.service.js` — aggregates `data/tasks.json` + `data/activity.json` into `{ total, byStatus, recentActivityCount }`.
+- `src/modules/reports/utils/reportsValidator.js` — validates query params passed to api.
 
 ## Modified Files
 
