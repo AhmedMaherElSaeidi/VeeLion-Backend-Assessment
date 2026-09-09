@@ -1,19 +1,20 @@
-const express = require('express');
+const express = require("express");
+const cors = require("cors");
 
-
-const tasksRouter = require('./modules/tasks/routes/tasks.routes');
-const reportsRouter = require('./modules/reports/routes/reports.routes');
-const activityRouter = require('./modules/activity/routes/activity.routes');
-const errorHandler = require('./middleware/errorHandler');
-const HttpError = require('./utils/httpError');
+const tasksRouter = require("./modules/tasks/routes/tasks.routes");
+const reportsRouter = require("./modules/reports/routes/reports.routes");
+const activityRouter = require("./modules/activity/routes/activity.routes");
+const errorHandler = require("./middleware/errorHandler");
+const HttpError = require("./utils/httpError");
 
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
-app.use('/tasks', tasksRouter);
-app.use('/reports', reportsRouter);
-app.use('/activity', activityRouter);
+app.use("/tasks", tasksRouter);
+app.use("/reports", reportsRouter);
+app.use("/activity", activityRouter);
 
 app.use((req, res, next) => {
   next(new HttpError(404, `Route not found: ${req.method} ${req.originalUrl}`));

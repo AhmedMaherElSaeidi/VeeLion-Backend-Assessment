@@ -47,9 +47,13 @@
 
 - Switched ID generation from `Date.now()` as it's collision-prone to `createId()`, same as Tasks module.
 
-**`src/modules/activity/routes/activity.routes.js`**
+**`src/app.js`**
 
-- Wrapped both handlers in `asyncHandler` so errors flow through the same central error middleware Tasks uses.
+- Applied CORS globally to all routes, so that requests get accepted by the server through UI.
+
+**`src/modules/tasks/services/tasks.service.js`**
+
+- Fixed mass-assignment bug in `updateTask` function used to spread the _entire_ request body onto the stored record, letting a client overwrite `id`/`createdAt` or inject arbitrary fields. Now only whitelisted fields [`title`, `completed`] are merged.
 
 ### Performance
 
