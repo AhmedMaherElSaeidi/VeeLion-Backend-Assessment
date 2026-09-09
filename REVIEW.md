@@ -1,13 +1,15 @@
 # Changes made
 
+Review of the existing Tasks API and Activity Log API, I stated most of the issues in the **Modified Files** section.
+
 ## New files
 
 - `REVIEW.md` — full code review (bugs, performance, maintainability, security, code quality).
 - `src/modules/activity/utils/activityValidator.js` — validates `POST /activity` bodies.
 - `src/modules/reports/routes/reports.routes.js` — `GET /reports/tasks-summary` route.
-- `src/modules/reports/controllers/reports.controller.js` — parses optional `?hours=` query param, calls the service.
+- `src/modules/reports/controllers/reports.controller.js` — parses optional `?hours=&minutes=&seconds=` query param, calls the service.
 - `src/modules/reports/services/reports.service.js` — aggregates `data/tasks.json` + `data/activity.json` into `{ total, byStatus, recentActivityCount }`.
-- `src/modules/reports/utils/reportsValidator.js` — validates query params passed to api.
+- `src/modules/reports/utils/reportsValidator.js` — validates query params `?hours=&minutes=&seconds=` passed to api.
 
 ## Modified Files
 
@@ -29,34 +31,37 @@
 
 - Added a 2-character minimum length check on `title` to ensure consistency.
 
-**`src/modules/tasks/services/tasks.service.js`**
-
-- Removed duplicate validation logic, as the controller handles it.
-
-**`src/modules/activity/services/activity.service.js`**
-
-- Removed two duplicate loader functions (`loadDataA`/`loadDataB`) in favor of one.
-
 ### Bugs
 
 **`src/modules/tasks/services/tasks.service.js`**
 
 - Fixed mass-assignment bug in `updateTask` function used to spread the _entire_ request body onto the stored record, letting a client overwrite `id`/`createdAt` or inject arbitrary fields. Now only whitelisted fields [`title`, `completed`] are merged.
+- Removed duplicate validation logic, as the controller handles it.
 
 **`src/modules/activity/services/activity.service.js`**
 
 - Switched ID generation from `Date.now()` as it's collision-prone to `createId()`, same as Tasks module.
+- Removed two duplicate loader functions (`loadDataA`/`loadDataB`) in favor of one.
 
 **`src/app.js`**
 
 - Applied CORS globally to all routes, so that requests get accepted by the server through UI.
-
-**`src/modules/tasks/services/tasks.service.js`**
-
-- Fixed mass-assignment bug in `updateTask` function used to spread the _entire_ request body onto the stored record, letting a client overwrite `id`/`createdAt` or inject arbitrary fields. Now only whitelisted fields [`title`, `completed`] are merged.
 
 ### Performance
 
 **`src/modules/activity/services/activity.service.js`**
 
 - Replaced synchronous `fs.readFileSync`/`writeFileSync` with the shared async `jsonStore.js` to stop blocking the event loop on every activity request.
+
+**Note: Whole-file read/write on every operation**
+Every read and write loads the _entire_ JSON array into memory and rewrites the whole file, even
+for a single-record change. Given the constraint of "JSON files only,".
+
+### Design
+
+**Note: Reports `byStatus` vs. the current Task schema**
+The assessment's expected response for `GET /reports/tasks-summary` groups tasks into
+`todo` / `in-progress` / `done`, but the existing Task schema only stores a boolean `completed`
+field, there's no way to distinguish "todo" from "in-progress" in current data. To Solve the Reports service
+derives status per task: it uses an explicit `status` field if a task happens to carry one
+(forward-compatible), otherwise falls back to `completed ? 'done' : 'todo'`. `in-progress`.
