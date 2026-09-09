@@ -43,6 +43,10 @@
 
 - Switched ID generation from `Date.now()` as it's collision-prone to `createId()`, same as Tasks module.
 
+**`src/modules/activity/routes/activity.routes.js`**
+
+- Wrapped both handlers in `asyncHandler` so errors flow through the same central error middleware Tasks uses.
+
 ### Performance
 
 **`src/modules/activity/services/activity.service.js`**
