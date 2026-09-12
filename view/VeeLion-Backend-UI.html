@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ledger — Tasks &amp; Activity</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #EEF0EA;
+    --paper-raised: #F6F7F2;
+    --ink: #16231B;
+    --ink-soft: #4B5A4F;
+    --rule: #C9CDBF;
+    --rule-strong: #A7AC9B;
+    --todo: #B5872B;
+    --progress: #35618F;
+    --done: #3F7A5C;
+    --danger: #8C3B2E;
+    --focus: #35618F;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  h1, h2, h3 {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    margin: 0;
+  }
+
+  a, button, input, select, textarea { font-family: inherit; }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  .shell {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ---- Rail ---- */
+  .rail {
+    border-right: 1px solid var(--rule);
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  .brand h1 {
+    font-size: 21px;
+    letter-spacing: 0.01em;
+  }
+  .brand p {
+    margin: 4px 0 0;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+  }
+
+  .nav { display: flex; flex-direction: column; gap: 2px; }
+  .nav button {
+    all: unset;
+    cursor: pointer;
+    padding: 9px 10px;
+    border-radius: 3px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .nav button:hover { background: var(--paper-raised); color: var(--ink); }
+  .nav button.active {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .nav button .count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    opacity: 0.75;
+  }
+
+  .connection {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid var(--rule);
+  }
+  .connection label {
+    display: block;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+  .connection .row {
+    display: flex;
+    gap: 6px;
+  }
+  .connection input {
+    flex: 1;
+    min-width: 0;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 6px 8px;
+    font-size: 12.5px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink);
+  }
+  .connection button.small {
+    all: unset;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 6px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    color: var(--ink-soft);
+  }
+  .connection button.small:hover { color: var(--ink); border-color: var(--ink); }
+  .status-line {
+    margin-top: 8px;
+    font-size: 11.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-soft);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--rule-strong); flex: none; }
+  .dot.ok { background: var(--done); }
+  .dot.bad { background: var(--danger); }
+
+  .checklist {
+    display: none;
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 10px 12px;
+  }
+  .checklist.show { display: block; }
+  .checklist strong { color: var(--ink); font-weight: 500; }
+  .checklist ol { margin: 6px 0 0; padding-left: 16px; }
+  .checklist li { margin-bottom: 4px; }
+  .checklist code {
+    font-family: 'IBM Plex Mono', monospace;
+    background: #fff;
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 0 3px;
+    font-size: 10.5px;
+  }
+
+  /* ---- Main ---- */
+  main {
+    padding: 40px 48px 64px;
+    max-width: 760px;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  .view-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+  .view-head h2 { font-size: 26px; }
+  .view-head p { margin: 6px 0 0; color: var(--ink-soft); font-size: 13.5px; }
+
+  .banner {
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    background: rgba(140, 59, 46, 0.06);
+    padding: 10px 12px;
+    border-radius: 3px;
+    font-size: 13px;
+    margin-bottom: 18px;
+    display: none;
+  }
+  .banner.show { display: block; }
+
+  /* forms */
+  .composer {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    background: var(--paper-raised);
+    padding: 14px 16px;
+    margin-bottom: 28px;
+  }
+  .composer .fields {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .composer input[type="text"] {
+    flex: 1;
+    min-width: 180px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 9px 10px;
+    font-size: 14px;
+    background: #fff;
+    color: var(--ink);
+  }
+  .composer .submit {
+    all: unset;
+    cursor: pointer;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 9px 16px;
+    border-radius: 3px;
+    font-size: 13.5px;
+    font-weight: 500;
+  }
+  .composer .submit:hover { opacity: 0.9; }
+  .composer .submit:disabled { opacity: 0.5; cursor: default; }
+  .composer .hint { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+
+  /* ledger rows */
+  .ledger { border-top: 1px solid var(--rule); }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 2px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .row .pill {
+    flex: none;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  .row .pill.todo { background: var(--todo); }
+  .row .pill.in-progress { background: var(--progress); }
+  .row .pill.done { background: var(--done); }
+
+  .row .title {
+    flex: 1;
+    min-width: 0;
+  }
+  .row .title .text {
+    font-size: 14.5px;
+  }
+  .row.completed .title .text {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+    text-decoration-color: var(--rule-strong);
+  }
+  .row .title .meta {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+  }
+
+  .row .actions { display: flex; gap: 4px; flex: none; }
+  .row .actions button {
+    all: unset;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 5px 8px;
+    border-radius: 3px;
+  }
+  .row .actions button:hover { background: var(--paper-raised); color: var(--ink); }
+  .row .actions button.delete:hover { color: var(--danger); }
+
+  .row input.edit-title {
+    flex: 1;
+    border: 1px solid var(--focus);
+    border-radius: 3px;
+    padding: 7px 9px;
+    font-size: 14.5px;
+    background: #fff;
+  }
+
+  .empty {
+    padding: 32px 4px;
+    color: var(--ink-soft);
+    font-size: 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .empty strong { color: var(--ink); display: block; margin-bottom: 4px; font-weight: 500; }
+
+  /* activity rows */
+  .arow {
+    display: flex;
+    gap: 14px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .arow time {
+    flex: none;
+    width: 108px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    padding-top: 1px;
+  }
+  .arow .body .action { font-size: 14px; }
+  .arow .body .info { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+
+  /* reports */
+  .stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 28px;
+  }
+  .stat {
+    background: var(--paper-raised);
+    padding: 20px;
+  }
+  .stat .num {
+    font-family: 'Fraunces', serif;
+    font-size: 34px;
+    line-height: 1;
+  }
+  .stat .label {
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 8px;
+  }
+
+  .status-bars { display: flex; flex-direction: column; gap: 10px; }
+  .status-bar { display: flex; align-items: center; gap: 10px; }
+  .status-bar .swatch { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+  .status-bar .swatch.todo { background: var(--todo); }
+  .status-bar .swatch.in-progress { background: var(--progress); }
+  .status-bar .swatch.done { background: var(--done); }
+  .status-bar .name { width: 92px; flex: none; font-size: 13.5px; }
+  .status-bar .track {
+    flex: 1;
+    height: 8px;
+    background: var(--paper-raised);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .status-bar .fill { height: 100%; }
+  .status-bar .fill.todo { background: var(--todo); }
+  .status-bar .fill.in-progress { background: var(--progress); }
+  .status-bar .fill.done { background: var(--done); }
+  .status-bar .n { width: 24px; text-align: right; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); }
+
+  .reports-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .reports-controls select {
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 5px 8px;
+    background: #fff;
+    color: var(--ink);
+    font-size: 13px;
+  }
+  .reports-controls button.small {
+    all: unset;
+    cursor: pointer;
+    font-size: 12.5px;
+    padding: 6px 10px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    color: var(--ink-soft);
+  }
+  .reports-controls button.small:hover { color: var(--ink); border-color: var(--ink); }
+
+  .window-input {
+    width: 52px;
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 5px 6px;
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    background: #fff;
+    color: var(--ink);
+    text-align: right;
+  }
+  .reports-controls .unit {
+    margin-right: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink-soft);
+  }
+  .custom-window {
+    display: none;
+    align-items: center;
+    gap: 2px;
+  }
+  .custom-window.show { display: inline-flex; }
+
+  @media (max-width: 760px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail {
+      flex-direction: row;
+      align-items: center;
+      padding: 16px 18px;
+      border-right: none;
+      border-bottom: 1px solid var(--rule);
+      gap: 20px;
+    }
+    .brand p { display: none; }
+    .nav { flex-direction: row; gap: 4px; }
+    .connection { display: none; }
+    main { padding: 28px 20px 48px; }
+    .stat-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="rail">
+    <div class="brand">
+      <h1>Ledger</h1>
+      <p>Tasks, activity &amp; reports</p>
+    </div>
+    <div class="nav">
+      <button data-view="tasks" class="active">Tasks <span class="count" id="tasksCount"></span></button>
+      <button data-view="activity">Activity <span class="count" id="activityCount"></span></button>
+      <button data-view="reports">Reports</button>
+    </div>
+    <div class="connection">
+      <label for="baseUrl">API base URL</label>
+      <div class="row">
+        <input id="baseUrl" type="text" value="http://localhost:3000" spellcheck="false" />
+        <button class="small" id="reconnect">Set</button>
+      </div>
+      <div class="status-line"><span class="dot" id="statusDot"></span><span id="statusText">Not connected</span></div>
+      <div class="checklist show" id="checklist">
+        <strong>If nothing loads:</strong>
+        <ol>
+          <li>Server running? (<code>npm start</code>)</li>
+          <li>URL above matches the server's port</li>
+          <li>Server has CORS enabled — <code>app.js</code> needs:<br><code>app.use(require('cors')())</code></li>
+        </ol>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <div class="banner" id="errorBanner"></div>
+
+    <!-- TASKS -->
+    <section class="view active" id="view-tasks">
+      <div class="view-head">
+        <div>
+          <h2>Tasks</h2>
+          <p>Everything on the board, oldest first.</p>
+        </div>
+      </div>
+
+      <form class="composer" id="taskForm">
+        <div class="fields">
+          <input type="text" id="taskTitle" placeholder="Describe a task…" maxlength="200" required />
+          <button class="submit" type="submit">Add task</button>
+        </div>
+      </form>
+
+      <div class="ledger" id="tasksLedger"></div>
+    </section>
+
+    <!-- ACTIVITY -->
+    <section class="view" id="view-activity">
+      <div class="view-head">
+        <div>
+          <h2>Activity</h2>
+          <p>A running log of what's happened, newest first.</p>
+        </div>
+      </div>
+
+      <form class="composer" id="activityForm">
+        <div class="fields">
+          <input type="text" id="activityAction" placeholder="What happened? (e.g. reviewed task)" maxlength="120" required />
+          <input type="text" id="activityInfo" placeholder="Details (optional)" maxlength="200" />
+          <button class="submit" type="submit">Log it</button>
+        </div>
+      </form>
+
+      <div class="ledger" id="activityLedger"></div>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="view" id="view-reports">
+      <div class="view-head">
+        <div>
+          <h2>Reports</h2>
+          <p>A summary snapshot of tasks and recent activity.</p>
+        </div>
+      </div>
+
+      <div class="reports-controls">
+        <span>Recent activity window:</span>
+        <select id="windowPreset">
+          <option value="300">Last 5 minutes</option>
+          <option value="900">Last 15 minutes</option>
+          <option value="3600">Last hour</option>
+          <option value="21600">Last 6 hours</option>
+          <option value="86400" selected>Last 24 hours</option>
+          <option value="604800">Last 7 days</option>
+          <option value="2592000">Last 30 days</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <span class="custom-window" id="customWindow">
+          <input type="number" id="winHours" min="0" value="0" class="window-input" aria-label="Hours" /><span class="unit">h</span>
+          <input type="number" id="winMinutes" min="0" value="0" class="window-input" aria-label="Minutes" /><span class="unit">m</span>
+          <input type="number" id="winSeconds" min="0" value="0" class="window-input" aria-label="Seconds" /><span class="unit">s</span>
+        </span>
+        <button class="small" id="refreshReports">Refresh</button>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat">
+          <div class="num" id="statTotal">—</div>
+          <div class="label">Total tasks</div>
+        </div>
+        <div class="stat">
+          <div class="num" id="statRecent">—</div>
+          <div class="label">Recent activity entries</div>
+        </div>
+      </div>
+
+      <div class="status-bars" id="statusBars"></div>
+    </section>
+  </main>
+</div>
+
+<script>
+(function () {
+  let baseUrl = document.getElementById('baseUrl').value.replace(/\/$/, '');
+  let currentView = 'tasks';
+  let tasksCache = [];
+  let activityCache = [];
+
+  const $ = (id) => document.getElementById(id);
+  const banner = $('errorBanner');
+  const statusDot = $('statusDot');
+  const statusText = $('statusText');
+
+  function showError(message) {
+    banner.textContent = message;
+    banner.classList.add('show');
+  }
+  function clearError() {
+    banner.classList.remove('show');
+    banner.textContent = '';
+  }
+  function setConnection(ok, label) {
+    statusDot.className = 'dot ' + (ok ? 'ok' : 'bad');
+    statusText.textContent = label;
+    $('checklist').classList.toggle('show', !ok);
+  }
+
+  async function api(path, options) {
+    let res;
+    try {
+      res = await fetch(baseUrl + path, {
+        headers: { 'Content-Type': 'application/json' },
+        ...options,
+      });
+    } catch (networkErr) {
+      throw new Error(
+        'Could not reach ' + baseUrl + path + '. Check: the server is running, ' +
+        'the base URL above is correct, and the server has CORS enabled (app.use(cors()) in app.js).'
+      );
+    }
+    let body = null;
+    const text = await res.text();
+    if (text) {
+      try { body = JSON.parse(text); } catch (e) { /* non-JSON response */ }
+    }
+    if (!res.ok) {
+      const message = (body && body.message) || (body && body.error) || ('Request failed (' + res.status + ')');
+      throw new Error(message);
+    }
+    return body;
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString(undefined, {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    });
+  }
+
+  // ---------- Navigation ----------
+  document.querySelectorAll('.nav button').forEach((btn) => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.nav button').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+    document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === 'view-' + view));
+    clearError();
+    if (view === 'tasks') loadTasks();
+    if (view === 'activity') loadActivity();
+    if (view === 'reports') loadReports();
+  }
+
+  // ---------- Connection ----------
+  $('reconnect').addEventListener('click', () => {
+    baseUrl = $('baseUrl').value.replace(/\/$/, '');
+    switchView(currentView);
+  });
+
+  async function checkConnection() {
+    try {
+      await api('/tasks', { method: 'GET' });
+      setConnection(true, 'Connected');
+    } catch (e) {
+      setConnection(false, 'Can\u2019t reach API');
+    }
+  }
+
+  // ---------- Tasks ----------
+  const tasksLedger = $('tasksLedger');
+
+  async function loadTasks() {
+    try {
+      const body = await api('/tasks');
+      tasksCache = (body && body.data) || [];
+      renderTasks();
+      setConnection(true, 'Connected');
+    } catch (e) {
+      showError('Couldn\u2019t load tasks: ' + e.message);
+      setConnection(false, 'Can\u2019t reach API');
+    }
+  }
+
+  function statusOf(task) {
+    return task.completed ? 'done' : 'todo';
+  }
+
+  function renderTasks() {
+    $('tasksCount').textContent = tasksCache.length ? String(tasksCache.length) : '';
+    if (!tasksCache.length) {
+      tasksLedger.innerHTML = '<div class="empty"><strong>No tasks yet.</strong>Add one above to start the board.</div>';
+      return;
+    }
+    tasksLedger.innerHTML = '';
+    tasksCache.forEach((task) => {
+      const status = statusOf(task);
+      const row = document.createElement('div');
+      row.className = 'row' + (task.completed ? ' completed' : '');
+      row.innerHTML = `
+        <span class="pill ${status}"></span>
+        <div class="title">
+          <div class="text">${escapeHtml(task.title)}</div>
+          <div class="meta">${fmtTime(task.updatedAt || task.createdAt)}</div>
+        </div>
+        <div class="actions">
+          <button data-action="toggle">${task.completed ? 'Mark open' : 'Mark done'}</button>
+          <button data-action="rename">Rename</button>
+          <button data-action="delete" class="delete">Delete</button>
+        </div>
+      `;
+      row.querySelector('[data-action="toggle"]').addEventListener('click', () => toggleTask(task));
+      row.querySelector('[data-action="rename"]').addEventListener('click', () => startRename(row, task));
+      row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteTask(task));
+      tasksLedger.appendChild(row);
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  $('taskForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = $('taskTitle');
+    const title = input.value.trim();
+    if (!title) return;
+    clearError();
+    try {
+      await api('/tasks', { method: 'POST', body: JSON.stringify({ title, completed: false }) });
+      input.value = '';
+      loadTasks();
+    } catch (err) {
+      showError('Couldn\u2019t add that task: ' + err.message);
+    }
+  });
+
+  async function toggleTask(task) {
+    clearError();
+    try {
+      await api('/tasks/' + encodeURIComponent(task.id), {
+        method: 'PATCH',
+        body: JSON.stringify({ completed: !task.completed }),
+      });
+      loadTasks();
+    } catch (err) {
+      showError('Couldn\u2019t update that task: ' + err.message);
+    }
+  }
+
+  function startRename(row, task) {
+    row.innerHTML = '';
+    const input = document.createElement('input');
+    input.className = 'edit-title';
+    input.type = 'text';
+    input.maxLength = 200;
+    input.value = task.title;
+    row.appendChild(input);
+    input.focus();
+    input.select();
+
+    const commit = async () => {
+      const newTitle = input.value.trim();
+      if (!newTitle || newTitle === task.title) { renderTasks(); return; }
+      clearError();
+      try {
+        await api('/tasks/' + encodeURIComponent(task.id), {
+          method: 'PATCH',
+          body: JSON.stringify({ title: newTitle }),
+        });
+        loadTasks();
+      } catch (err) {
+        showError('Couldn\u2019t rename that task: ' + err.message);
+        renderTasks();
+      }
+    };
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') commit();
+      if (e.key === 'Escape') renderTasks();
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  async function deleteTask(task) {
+    clearError();
+    try {
+      await api('/tasks/' + encodeURIComponent(task.id), { method: 'DELETE' });
+      loadTasks();
+    } catch (err) {
+      showError('Couldn\u2019t delete that task: ' + err.message);
+    }
+  }
+
+  // ---------- Activity ----------
+  const activityLedger = $('activityLedger');
+
+  async function loadActivity() {
+    try {
+      const body = await api('/activity');
+      activityCache = Array.isArray(body) ? body.slice().reverse() : [];
+      renderActivity();
+      setConnection(true, 'Connected');
+    } catch (e) {
+      showError('Couldn\u2019t load the activity log: ' + e.message);
+      setConnection(false, 'Can\u2019t reach API');
+    }
+  }
+
+  function renderActivity() {
+    $('activityCount').textContent = activityCache.length ? String(activityCache.length) : '';
+    if (!activityCache.length) {
+      activityLedger.innerHTML = '<div class="empty"><strong>Nothing logged yet.</strong>Entries you record above will show up here.</div>';
+      return;
+    }
+    activityLedger.innerHTML = activityCache.map((entry) => `
+      <div class="arow">
+        <time>${fmtTime(entry.when)}</time>
+        <div class="body">
+          <div class="action">${escapeHtml(entry.action || '—')}</div>
+          ${entry.info ? `<div class="info">${escapeHtml(entry.info)}</div>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  $('activityForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const actionInput = $('activityAction');
+    const infoInput = $('activityInfo');
+    const action = actionInput.value.trim();
+    if (!action) return;
+    clearError();
+    try {
+      const payload = { action };
+      if (infoInput.value.trim()) payload.info = infoInput.value.trim();
+      await api('/activity', { method: 'POST', body: JSON.stringify(payload) });
+      actionInput.value = '';
+      infoInput.value = '';
+      loadActivity();
+    } catch (err) {
+      showError('Couldn\u2019t log that entry: ' + err.message);
+    }
+  });
+
+  // ---------- Reports ----------
+  $('refreshReports').addEventListener('click', loadReports);
+  $('windowPreset').addEventListener('change', () => {
+    const isCustom = $('windowPreset').value === 'custom';
+    $('customWindow').classList.toggle('show', isCustom);
+    loadReports();
+  });
+  ['winHours', 'winMinutes', 'winSeconds'].forEach((id) => {
+    $(id).addEventListener('change', loadReports);
+  });
+
+  function currentWindowSeconds() {
+    const preset = $('windowPreset').value;
+    if (preset !== 'custom') return Number(preset);
+
+    const hours = Number($('winHours').value) || 0;
+    const minutes = Number($('winMinutes').value) || 0;
+    const seconds = Number($('winSeconds').value) || 0;
+    return hours * 3600 + minutes * 60 + seconds;
+  }
+
+  async function loadReports() {
+    clearError();
+    try {
+      const totalSeconds = currentWindowSeconds();
+      const params = new URLSearchParams({ seconds: String(totalSeconds) });
+      const body = await api('/reports/tasks-summary?' + params.toString());
+      renderReports(body);
+      setConnection(true, 'Connected');
+    } catch (e) {
+      showError('Couldn\u2019t load the report: ' + e.message);
+      setConnection(false, 'Can\u2019t reach API');
+    }
+  }
+
+  function renderReports(summary) {
+    $('statTotal').textContent = summary.total ?? '—';
+    $('statRecent').textContent = summary.recentActivityCount ?? '—';
+    const byStatus = summary.byStatus || { todo: 0, 'in-progress': 0, done: 0 };
+    const total = Math.max(1, summary.total || 0);
+    const labels = [['todo', 'To do'], ['in-progress', 'In progress'], ['done', 'Done']];
+    $('statusBars').innerHTML = labels.map(([key, label]) => {
+      const n = byStatus[key] || 0;
+      const pct = Math.round((n / total) * 100);
+      return `
+        <div class="status-bar">
+          <span class="swatch ${key}"></span>
+          <span class="name">${label}</span>
+          <span class="track"><span class="fill ${key}" style="width:${pct}%"></span></span>
+          <span class="n">${n}</span>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // ---------- Boot ----------
+  checkConnection();
+  loadTasks();
+})();
+</script>
+</body>
+</html>
