@@ -4,14 +4,14 @@
     "title": "Test task",
     "completed": true,
     "createdAt": "2026-04-08T09:39:57.432Z",
-    "updatedAt": "2026-09-09T02:16:32.485Z"
+    "updatedAt": "2026-09-20T09:04:57.323Z"
   },
   {
     "id": "9a749a2d-ec52-415e-b68d-3c16a6ed024d",
     "title": "degraded task",
-    "completed": true,
+    "completed": false,
     "createdAt": "2026-04-08T09:49:54.480Z",
-    "updatedAt": "2026-04-08T09:49:54.497Z"
+    "updatedAt": "2026-09-20T09:04:53.897Z"
   },
   {
     "id": "4398f26b-f527-4eeb-b74c-cd4c0ecc9060",
