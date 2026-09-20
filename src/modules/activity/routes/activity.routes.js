@@ -7,5 +7,6 @@ const activityRouter = express.Router();
 
 activityRouter.get('/', asyncHandler(activityController.getActivity));
 activityRouter.post('/', asyncHandler(activityController.addActivity));
+activityRouter.delete('/:id', asyncHandler(activityController.removeActivity));
 
 module.exports = activityRouter;

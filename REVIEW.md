@@ -13,6 +13,20 @@ Review of the existing Tasks API and Activity Log API, I stated most of the issu
 
 ## Modified Files
 
+### New Feature
+
+**`src/modules/activity/controllers/activity.controller.js`**
+
+- Added `removeActivity` function to handle activity deletion
+
+**`src/modules/activity/controllers/activity.service.js`**
+
+- Added `deleteActivity` function to handle activity deletion
+
+**`src/modules/activity/controllers/activity.routes.js`**
+
+- Added `activityRouter.delete('/:id', asyncHandler(activityController.removeActivity));` function to handle activity deletion
+
 ### Maintability
 
 **`src/modules/tasks/controllers/tasks.controller.js`**

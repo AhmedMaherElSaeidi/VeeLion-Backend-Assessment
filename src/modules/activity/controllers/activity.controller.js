@@ -12,8 +12,13 @@ async function addActivity(req, res) {
   res.status(201).json(created);
 }
 
+async function removeActivity(req, res) {
+  await activityService.deleteActivity(req.params.id);
+  res.status(204).send();
+}
+
 module.exports = {
   getActivity,
   addActivity,
+  removeActivity,
 };
- 
