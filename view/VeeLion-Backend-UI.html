@@ -310,6 +310,7 @@
     gap: 14px;
     padding: 12px 2px;
     border-bottom: 1px solid var(--rule);
+    align-items: flex-start;
   }
   .arow time {
     flex: none;
@@ -319,8 +320,19 @@
     color: var(--ink-soft);
     padding-top: 1px;
   }
+  .arow .body { flex: 1; min-width: 0; }
   .arow .body .action { font-size: 14px; }
   .arow .body .info { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  .arow .actions { display: flex; gap: 4px; flex: none; }
+  .arow .actions button {
+    all: unset;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--ink-soft);
+    padding: 5px 8px;
+    border-radius: 3px;
+  }
+  .arow .actions button:hover { background: var(--paper-raised); color: var(--danger); }
 
   /* reports */
   .stat-grid {
@@ -791,15 +803,33 @@
       activityLedger.innerHTML = '<div class="empty"><strong>Nothing logged yet.</strong>Entries you record above will show up here.</div>';
       return;
     }
-    activityLedger.innerHTML = activityCache.map((entry) => `
-      <div class="arow">
+    activityLedger.innerHTML = '';
+    activityCache.forEach((entry) => {
+      const row = document.createElement('div');
+      row.className = 'arow';
+      row.innerHTML = `
         <time>${fmtTime(entry.when)}</time>
         <div class="body">
           <div class="action">${escapeHtml(entry.action || '—')}</div>
           ${entry.info ? `<div class="info">${escapeHtml(entry.info)}</div>` : ''}
         </div>
-      </div>
-    `).join('');
+        <div class="actions">
+          <button data-action="delete">Delete</button>
+        </div>
+      `;
+      row.querySelector('[data-action="delete"]').addEventListener('click', () => deleteActivity(entry));
+      activityLedger.appendChild(row);
+    });
+  }
+
+  async function deleteActivity(entry) {
+    clearError();
+    try {
+      await api('/activity/' + encodeURIComponent(entry.id), { method: 'DELETE' });
+      loadActivity();
+    } catch (err) {
+      showError('Couldn\u2019t delete that entry: ' + err.message);
+    }
   }
 
   $('activityForm').addEventListener('submit', async (e) => {
